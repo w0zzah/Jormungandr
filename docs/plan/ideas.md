@@ -7,7 +7,8 @@
 
 ### Small things for code file
 - Each Function should be able to run independently
-- First concept function should print "Hello World!" 
+- First concept function should print "Hello World!"
+
 ## Concept: Complete the function first
 ##### Tags: PVP, Competitive, Conflict, Goal Orientated
 First to write a function that can do 'x' wins 
