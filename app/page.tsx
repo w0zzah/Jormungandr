@@ -1,4 +1,5 @@
 import Image from "next/image";
+import {currentUser, Line, Mode} from "@/lib/types";
 
 export default function Home() {
   return (
