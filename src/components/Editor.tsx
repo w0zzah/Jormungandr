@@ -1,62 +1,93 @@
 "use client";
-import { useRef, useState } from "react";
+import {useEffect, useRef, useState} from "react";
 import Image from "next/image";
+import {Mode} from "@/types/mode";
+import {CodeLine} from "@/types/line";
+import {addLine, editLine, getLines} from "@/lib/api";
+import Composer from "@/components/Composer";
 
-type Line = { id: number; text: string };
-type Mode = { kind: "edit"; id: number } | { kind: "add"; after: number | null };
-const STARTER = ['print("hello world")'];
 
 const btn = "bg-gray-100 p-3 text-black hover:bg-gray-200 disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700";
 const row = "group flex items-start gap-5 p-3";
 const gutter = "w-14 shrink-0 select-none text-right text-gray-500";
-const iconBtn = "shrink-0 px-2 text-blue-700 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 motion-reduce:transition-none dark:text-blue-400 [@media(hover:none)]:opacity-100";
 
 export default function Editor() {
-    /**
-     * State: changing any of these re-renders the page.
-     *  lines:   the whole program, in order
-     *  mode:    which composer (if any) is open
-     *  draft:   the text typed into the composer but not yet committed
-     *  output:  null = output panel hidden, string = shown
-     *  running: a run is in progress
-     */
-    const [lines, setLines] = useState<Line[]>(STARTER.map((text, i) => ({ id: i + 1, text })));
+
+    // Editing state
     const [mode, setMode] = useState<Mode | null>(null);
+
+    // Code State
+    const [lines, setLines] = useState<CodeLine[]>([]);
     const [draft, setDraft] = useState("");
     const [output, setOutput] = useState<string | null>(null);
-    const [running, setRunning] = useState(false);
 
-    const nextId = useRef(STARTER.length + 1);
+    // Internal State
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [running, setRunning] = useState(false);
 
     const open = (m: Mode | null, text = "") => {
         setMode(m);
         setDraft(text);
     };
 
-    /* add code */
-    function submit() {
-        if (!mode) return;
+    const refresh = async () => {
 
-        if (mode.kind === "edit") {
-            setLines((ls) => ls.map((l) => (l.id === mode.id ? { ...l, text: draft } : l)));
+        try {
+
+            setLoading(true);
+            setLines((await getLines()).lines);
+            setError(null);
+
+        } catch (e) {
+            setError((e as Error).message);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    useEffect(() => {
+        refresh();
+    }, []);
+
+
+    const submit = async () => {
+
+        // Not editing
+        if (!mode || saving)
+            return;
+
+        // Creating a new line
+        if (mode.kind === "add" && draft.trim() === "")  {
             open(null);
             return;
         }
 
-        if (draft.trim() === "") { open(null); return; }
+        setSaving(true);
 
-        const id = nextId.current++;
-        setLines((ls) => {
-            const at = mode.after === null ? 0 : ls.findIndex((l) => l.id === mode.after) + 1;
-            return [...ls.slice(0, at), { id, text: draft }, ...ls.slice(at)];
-        });
-        open({ kind: "add", after: id });
+        try {
+
+            if (mode.kind === "edit") {
+
+                await editLine(mode.id, draft);
+                await refresh();
+                open(null);
+
+            } else {
+
+                const saved = await addLine(draft);
+                await refresh();
+                open({ kind: "add", after: saved.id });
+
+            }
+        } catch (e) {
+            setError((e as Error).message);
+        } finally {
+            setSaving(false);
+        }
     }
-    /* remove code */
-    function remove(id: number) {
-        setLines((ls) => ls.filter((l) => l.id !== id));
-        open(null);
-    }
+
 
     /* run code */
     function run() {
@@ -133,7 +164,12 @@ export default function Editor() {
 
                     <ol className="overflow-x-auto bg-gray-100 font-mono text-sm dark:bg-zinc-900">
                         {mode?.kind === "add" && mode.after === null && (
-                            <li><div className={row}><span className={gutter}>+</span>{composer}</div></li>
+                            <li>
+                                <div className={row}>
+                                    <span className={gutter}>+</span>
+                                    {composer}
+                                </div>
+                            </li>
                         )}
 
                         {lines.length === 0 && !mode && <li className="px-5 py-4 font-sans text-gray-500">Write on me!</li>}
@@ -156,12 +192,6 @@ export default function Editor() {
                                             </button>
                                         )}
 
-                                        {!mode && (
-                                            <>
-                                                <button className={iconBtn} aria-label={`Add a line after line ${i + 1}`} onClick={() => open({ kind: "add", after: l.id })}>+</button>
-                                                <button className={iconBtn} aria-label={`Delete line ${i + 1}`} onClick={() => remove(l.id)}>×</button>
-                                            </>
-                                        )}
                                     </div>
                                     {adding && <div className={row}><span className={gutter}>+</span>{composer}</div>}
                                 </li>
