@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { editLine } from "@/lib/lines";
+import { editLine } from "../../../../../lib/server/lines";
 
 export async function POST(req: Request) {
 

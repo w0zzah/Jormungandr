@@ -7,6 +7,7 @@ import Toolbar from "@/components/Editor/Toolbar";
 import LineList from "./Code/LineList";
 import OutputPanel from "@/components/Editor/OutputPanel";
 import Composer from "./Code/Composer";
+import {useRunner} from "@/hooks/useRunner";
 
 export default function Editor() {
 
@@ -16,13 +17,13 @@ export default function Editor() {
     // Code State
     const [lines, setLines] = useState<CodeLine[]>([]);
     const [draft, setDraft] = useState("");
-    const [output, setOutput] = useState<string | null>(null);
 
     // Internal State
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [running, setRunning] = useState(false);
+
+    const {output, running, run} = useRunner();
 
     const open = (m: Mode | null, text = "") => {
         setMode(m);
@@ -84,36 +85,13 @@ export default function Editor() {
         }
     }
 
-
-    /* run code */
-    function run() {
-        setRunning(true);
-        setOutput("");
-        const w = new Worker("/py-worker.js");
-        const timer = setTimeout(() => {
-            w.terminate();
-            setOutput((o) => `${o ?? ""}\nStopped: the program ran longer than 10 seconds.`);
-            setRunning(false);
-        }, 10_000);
-        w.onmessage = (e) => {
-            if (e.data.done) {
-                clearTimeout(timer);
-                w.terminate();
-                setRunning(false);
-            } else {
-                setOutput((o) => (o ?? "") + e.data.text);
-            }
-        };
-        w.postMessage(lines.map((l) => l.text).join("\n"));
-    }
-
     return (
         <>
             <section aria-label="Program" className="w-full">
                 <Toolbar
                     running={running}
                     canRun={lines.length > 0}
-                    onRun={run}
+                    onRun={() => run(lines.map((l) => l.text).join("\n"))}
                     onAdd={() => open({kind: "add", after: lines.at(-1)?.id ?? null})}
                 />
 
