@@ -1,0 +1,27 @@
+// use prisma-8
+enum ActionType {
+  INSERT
+  UPDATE
+  DELETE
+}
+
+model Line {
+  id         Int      @id @default(autoincrement())
+  prevLineId Int?
+  text       String
+  deleted    Boolean  @default(false)
+  actions    Action[]
+}
+
+model Action {
+  id         Int        @id @default(autoincrement())
+  createdAt  DateTime   @default(now())
+  type       ActionType
+  lineId     Int
+  prevLineId Int?
+  oldText    String?
+  newText    String?
+  line       Line       @relation(fields: [lineId], references: [id])
+
+  @@index([lineId, id])
+}
