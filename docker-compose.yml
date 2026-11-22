@@ -1,12 +1,12 @@
 services:
   db:
     image: postgres:16
-    container_name: poc-postgres
+    container_name: jormungandr-dev-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: poc
-      POSTGRES_PASSWORD: poc
-      POSTGRES_DB: poc
+      POSTGRES_USER: jormungandr
+      POSTGRES_PASSWORD: jormungandr
+      POSTGRES_DB: jormungandr
     ports:
       - "5432:5432"
     volumes:
