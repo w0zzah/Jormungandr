@@ -1,4 +1,4 @@
-import Button from "@/components/UI/Button";
+import Button from "@/components/ui/button";
 
 type Props = {
     running: boolean;

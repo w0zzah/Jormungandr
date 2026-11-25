@@ -3,10 +3,10 @@ import {useEffect, useState} from "react";
 import {Mode} from "@/types/mode";
 import {CodeLine} from "@/types/line";
 import {addLine, editLine, getLines} from "@/lib/api";
-import Toolbar from "@/components/Editor/Toolbar";
-import LineList from "./Code/LineList";
-import OutputPanel from "@/components/Editor/OutputPanel";
-import Composer from "./Code/Composer";
+import Toolbar from "@/components/editor/toolbar";
+import LineList from "@/components/editor/code/LineList";
+import OutputPanel from "@/components/editor/outputPanel";
+import Composer from "@/components/editor/code/Composer";
 import {useRunner} from "@/hooks/useRunner";
 
 export default function Editor() {
