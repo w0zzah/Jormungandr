@@ -89,12 +89,6 @@ export default function Editor() {
     return (
         <>
             <section aria-label="Program" className="w-full">
-                <Toolbar
-                    running={running}
-                    canRun={lines.length > 0}
-                    onRun={() => run(lines.map((l) => l.text).join("\n"))}
-                    onAdd={() => open({kind: "add", after: lines.at(-1)?.id ?? null})}
-                />
 
                 {error && <p role="alert" className="mb-3 text-red-600 dark:text-red-400">{error}</p>}
 
@@ -122,7 +116,12 @@ export default function Editor() {
                     </div>
                 )}
             </section>
-
+            <Toolbar
+                running={running}
+                canRun={lines.length > 0}
+                onRun={() => run(lines.map((l) => l.text).join("\n"))}
+                onAdd={() => open({kind: "add", after: lines.at(-1)?.id ?? null})}
+            />
             <OutputPanel output={output} running={running}/>
         </>
 
