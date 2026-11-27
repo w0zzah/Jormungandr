@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
-import { editLine } from "../../../../../lib/server/lines";
+import {editLine, isValidText} from "@/lib/server/lines";
 
 export async function POST(req: Request) {
 
     const body = await req.json();
-    const {line_id, new_text } = body;
+    const {line_id, new_text} = body;
 
     // Validate request
-    if (!Number.isInteger(line_id) || typeof new_text !== "string")
+    if (!Number.isInteger(line_id) || !isValidText(new_text))
         return NextResponse.json({ error: "expected { line_id: int, new_text: string }" }, { status: 400 });
 
     // Try to update the line

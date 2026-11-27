@@ -27,10 +27,21 @@ export const editLine = async (line_id: number, new_text: string) => {
 
 }
 
-export const addLine = async (new_text: string) => {
+//note: line_id_above undef is append, null = new top
+export const addLine = async (new_text: string, line_id_above?: number | null) => {
 
     const response = await http.post<CodeLine>("/lines/add", {
-        new_text
+        new_text,
+        line_id_above
+    });
+    return response.data;
+
+}
+
+export const removeLine = async (line_id: number) => {
+
+    const response = await http.post<CodeLine>("/lines/remove", {
+        line_id
     });
     return response.data;
 

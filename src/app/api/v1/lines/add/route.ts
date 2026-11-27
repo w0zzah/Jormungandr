@@ -1,15 +1,20 @@
 import { NextResponse } from "next/server";
-import { addLine } from "../../../../../lib/server/lines";
+import { addLine, isValidText } from "@/lib/server/lines";
 
 export async function POST(req: Request) {
 
     const body = await req.json();
-    const {new_text} = body;
+    const {new_text, line_id_above} = body;
 
     // Validate request
-    if (typeof new_text !== "string")
-        return NextResponse.json({ error: "expected { new_text: string }" }, { status: 400 });
+    const aboveOk = line_id_above === undefined || line_id_above === null || Number.isInteger(line_id_above);
+    if (!isValidText(new_text) || !aboveOk)
+        return NextResponse.json({ error: "malformed request" }, { status: 400 });
 
     // Add the line
-    return NextResponse.json(await addLine(new_text), { status: 201 });
+    const line = await addLine(new_text, line_id_above);
+    if (!line)
+        return NextResponse.json({ error: "line above not found" }, { status: 404 });
+
+    return NextResponse.json(line, { status: 201 });
 }

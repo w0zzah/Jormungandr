@@ -7,6 +7,11 @@ export type Line = {
   color: string;
 }
 
+export type ChainedLine = {
+    id: number;
+    prevLineId: number | null
+};
+
 export type currentUser = {
   user: { id: number; name: string; } | null;
   can_edit: boolean;
