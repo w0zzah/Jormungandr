@@ -39,7 +39,6 @@ export default function LineList({ lines, mode, loading, composer, onEdit }: Pro
                         {editingId === l.id ? composer : (
                             <button
                                 className="flex-1 cursor-text whitespace-pre px-3 py-1 text-left enabled:hover:bg-blue-500/10"
-                                disabled={!!mode}
                                 onClick={() => onEdit(l)}
                             >
                                 {l.text || " "}

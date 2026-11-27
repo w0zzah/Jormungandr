@@ -2,13 +2,14 @@
 import {useEffect, useState} from "react";
 import {Mode} from "@/types/mode";
 import {CodeLine} from "@/types/line";
-import {addLine, editLine, getLines} from "@/lib/api";
+import {addLine, editLine, getLines, removeLine} from "@/lib/api";
+import {useRunner} from "@/hooks/useRunner";
+import {useHotkeys} from "@/hooks/useHotkeys";
+import {useLineCursor} from "@/hooks/useLineCursor";
 import Toolbar from "./Toolbar";
 import LineList from "./code/LineList";
 import OutputPanel from "./OutputPanel";
 import Composer from "./code/Composer";
-import {useRunner} from "@/hooks/useRunner";
-import Button from "../UI/Button";
 
 export default function Editor() {
 
@@ -25,6 +26,7 @@ export default function Editor() {
     const [error, setError] = useState<string | null>(null);
 
     const {output, running, run} = useRunner();
+    const cursor = useLineCursor(lines);
 
     const open = (m: Mode | null, text = "") => {
         setMode(m);
@@ -56,7 +58,7 @@ export default function Editor() {
         if (!mode || saving)
             return;
 
-        // Creating a new line
+        // An empty new line means we're done adding
         if (mode.kind === "add" && draft.trim() === "") {
             open(null);
             return;
@@ -68,13 +70,19 @@ export default function Editor() {
 
             if (mode.kind === "edit") {
 
-                await editLine(mode.id, draft);
+                // Only hit the API if the line actually changed
+                const current = lines.find((l) => l.id === mode.id);
+                if (draft !== current?.text)
+                    await editLine(mode.id, draft);
+
+                cursor.select(mode.id);
                 await refresh();
-                open(null);
+                open({kind: "add", after: mode.id});
 
             } else {
 
-                const saved = await addLine(draft);
+                const saved = await addLine(draft, mode.after);
+                cursor.select(saved.id);
                 await refresh();
                 open({kind: "add", after: saved.id});
 
@@ -86,6 +94,111 @@ export default function Editor() {
         }
     }
 
+    const removeCurrentLine = async () => {
+
+        if (!cursor.current || saving)
+            return;
+
+        setSaving(true);
+
+        try {
+
+            await removeLine(cursor.current.id);
+            cursor.select(cursor.neighbour?.id ?? null);
+            await refresh();
+
+        } catch (e) {
+            setError((e as Error).message);
+        } finally {
+            setSaving(false);
+        }
+    }
+
+
+    const goToLine = async (target: CodeLine | undefined) => {
+
+        if (!mode || !target || saving)
+            return;
+
+        // Already on that line
+        if (mode.kind === "edit" && mode.id === target.id)
+            return;
+
+        setSaving(true);
+
+        try {
+
+            if (mode.kind === "edit") {
+
+                // Only hit the API if the line actually changed
+                const current = lines.find((l) => l.id === mode.id);
+                if (draft !== current?.text)
+                    await editLine(mode.id, draft);
+
+            } else if (draft.trim() !== "") {
+
+                // Was typing a new line, keep it
+                await addLine(draft, mode.after);
+            }
+
+            cursor.select(target.id);
+            await refresh();
+            open({kind: "edit", id: target.id}, target.text);
+
+        } catch (e) {
+            setError((e as Error).message);
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    const moveEdit = (direction: -1 | 1) => {
+
+        if (!mode)
+            return;
+
+        const index = lines.findIndex((l) => l.id === (mode.kind === "edit" ? mode.id : mode.after));
+
+        const target = mode.kind === "edit"
+            ? lines[index + direction]
+            : lines[direction === -1 ? index : index + 1];
+
+        goToLine(target);
+    }
+
+    const clickLine = (line: CodeLine) => {
+
+        if (mode) {
+            goToLine(line);
+            return;
+        }
+
+        cursor.select(line.id);
+        open({kind: "edit", id: line.id}, line.text);
+    }
+
+
+    const editCurrentLine = () => {
+        if (cursor.current)
+            open({kind: "edit", id: cursor.current.id}, cursor.current.text);
+        else
+            open({kind: "add", after: null});
+    }
+
+    const addBelow = () => open({kind: "add", after: cursor.current?.id ?? null});
+    const addAbove = () => open({kind: "add", after: cursor.above?.id ?? null});
+
+    const runProgram = () => {
+        if (running || lines.length === 0)
+            return;
+
+        run(lines.map((l) => l.text).join("\n"));
+    }
+
+    useHotkeys({
+        "shift+Enter": runProgram,
+    });
+
     return (
         <>
             <section aria-label="Program" className="w-full">
@@ -96,35 +209,27 @@ export default function Editor() {
                     lines={lines}
                     mode={mode}
                     loading={loading}
-                    onEdit={(l) => open({kind: "edit", id: l.id}, l.text)}
+                    activeId={cursor.current?.id ?? null}
+                    onEdit={clickLine}
                     composer={mode && (
                         <Composer
                             value={draft}
                             onChange={setDraft}
                             onSubmit={submit}
                             onCancel={() => open(null)}
+                            onMove={moveEdit}
                         />
                     )}
                 />
 
-                {mode && (
-                    <div className="sticky bottom-0 mt-3 flex items-center justify-center gap-2 py-3">
-                        <Button onClick={() => open(null)}>Cancel edit</Button>
-                        <Button onClick={submit} disabled={saving}>
-                            {mode.kind === "edit" ? "Save line" : "Add line"}
-                        </Button>
-                    </div>
-                )}
             </section>
+
             <Toolbar
                 running={running}
                 canRun={lines.length > 0}
-                onRun={() => run(lines.map((l) => l.text).join("\n"))}
-                onAdd={() => open({kind: "add", after: lines.at(-1)?.id ?? null})}
+                onRun={runProgram}
             />
             <OutputPanel output={output} running={running}/>
         </>
-
-
     );
 }

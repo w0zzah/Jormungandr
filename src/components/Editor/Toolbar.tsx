@@ -13,7 +13,6 @@ export default function Toolbar({running, canRun, onRun, onAdd}: Props) {
             <Button onClick={onRun} disabled={running || !canRun}>
                 {running ? "Running…" : "Run program"}
             </Button>
-            <Button onClick={onAdd}>Add line at end</Button>
         </div>
     );
 }
