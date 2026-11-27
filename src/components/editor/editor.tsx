@@ -8,6 +8,7 @@ import LineList from "@/components/editor/code/LineList";
 import OutputPanel from "@/components/editor/outputPanel";
 import Composer from "@/components/editor/code/Composer";
 import {useRunner} from "@/hooks/useRunner";
+import Button from "@/components/ui/button";
 
 export default function Editor() {
 
@@ -104,15 +105,22 @@ export default function Editor() {
                     onEdit={(l) => open({kind: "edit", id: l.id}, l.text)}
                     composer={mode && (
                         <Composer
-                            kind={mode.kind}
                             value={draft}
-                            saving={saving}
                             onChange={setDraft}
                             onSubmit={submit}
                             onCancel={() => open(null)}
                         />
                     )}
                 />
+
+                {mode && (
+                    <div className="sticky bottom-0 mt-3 flex items-center justify-center gap-2 py-3">
+                        <Button onClick={() => open(null)}>Cancel edit</Button>
+                        <Button onClick={submit} disabled={saving}>
+                            {mode.kind === "edit" ? "Save line" : "Add line"}
+                        </Button>
+                    </div>
+                )}
             </section>
 
             <OutputPanel output={output} running={running}/>
