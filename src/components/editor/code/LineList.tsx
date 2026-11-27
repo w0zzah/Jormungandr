@@ -19,7 +19,7 @@ export default function LineList({ lines, mode, loading, composer, onEdit }: Pro
     const addingAfter = mode?.kind === "add" ? mode.after : undefined;
 
     return (
-        <ol className="overflow-x-auto bg-gray-100 font-mono text-sm dark:bg-zinc-900">
+        <ol className="overflow-x-auto rounded-2xl border border-[#1e3a8a] bg-[#fdfdfd] font-mono text-sm dark:border-zinc-700 dark:bg-zinc-900">
 
             {loading && <li className="px-5 py-4 font-sans text-gray-500">Loading…</li>}
 
@@ -38,7 +38,7 @@ export default function LineList({ lines, mode, loading, composer, onEdit }: Pro
                         <Gutter>{String(i + 1).padStart(4, "0")}</Gutter>
                         {editingId === l.id ? composer : (
                             <button
-                                className="flex-1 cursor-text whitespace-pre text-left enabled:hover:bg-blue-500/10"
+                                className="flex-1 cursor-text whitespace-pre px-3 py-1 text-left enabled:hover:bg-blue-500/10"
                                 disabled={!!mode}
                                 onClick={() => onEdit(l)}
                             >
