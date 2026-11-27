@@ -42,3 +42,5 @@ next-env.d.ts
 node_modules/
 dist/
 .env
+/migrations/snapshots/93ebb6d79d050e711c4032d5ad5d7546c7399d18f33906e84dc6283cdaaf0021
+/prisma-8.md

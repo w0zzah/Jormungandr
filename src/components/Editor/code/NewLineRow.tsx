@@ -1,6 +1,6 @@
 import type {ReactNode} from "react";
-import Row from "@/components/ui/row";
-import Gutter from "@/components/ui/gutter";
+import Row from "../../UI/Row";
+import Gutter from "../../UI/Gutter";
 
 export default function NewLineRow({ children }: { children: ReactNode }) {
     return (

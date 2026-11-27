@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 import type { CodeLine } from "@/types/line";
 import type { Mode } from "@/types/mode";
-import Row from "@/components/ui/row";
-import Gutter from "@/components/ui/gutter";
-import NewLineRow from "@/components/editor/code/NewLineRow";
+import Row from "../../UI/Row";
+import Gutter from "../../UI/Gutter";
+import NewLineRow from "../code/NewLineRow";
 
 type Props = {
     lines: CodeLine[];
